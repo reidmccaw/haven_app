@@ -26,6 +26,7 @@ import {
   SAVED_PROJECTS_KEY,
   cleanupInvalidImages,
   migrateProjectImages,
+  initializeDemoProjects,
 } from "../utils/storage";
 import { CommentsScreen } from "./CommentsScreen";
 import {
@@ -164,9 +165,13 @@ export const ExistingProjects: React.FC<ExistingProjectsProps> = ({
   >({}); // Cache unread counts for all projects (object for better React state detection)
 
   useEffect(() => {
-    // Migrate old full-path URIs to filenames only
-    migrateProjectImages();
-    loadProjects();
+    // Initialize demo projects on first load, then migrate and load
+    const initialize = async () => {
+      await initializeDemoProjects();
+      await migrateProjectImages();
+      loadProjects();
+    };
+    initialize();
   }, []);
 
   // ONE-TIME CLEAR: Clear all stored comments to refresh with updated mock data

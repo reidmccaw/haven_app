@@ -484,4 +484,59 @@ export const migrateProjectImages = async (): Promise<void> => {
   }
 };
 
+// Initialize demo projects on first app load
+export const initializeDemoProjects = async (): Promise<void> => {
+  try {
+    const DEMO_INIT_FLAG = "@haven_demo_projects_initialized";
+    const hasInitialized = await AsyncStorage.getItem(DEMO_INIT_FLAG);
+
+    if (hasInitialized) {
+      return; // Already initialized
+    }
+
+    // Check if any projects exist
+    const existing = await AsyncStorage.getItem(SAVED_PROJECTS_KEY);
+    if (existing) {
+      const projects = JSON.parse(existing);
+      if (projects.length > 0) {
+        // Projects exist, don't initialize
+        await AsyncStorage.setItem(DEMO_INIT_FLAG, "true");
+        return;
+      }
+    }
+
+    // Create demo projects
+    const demoProjects = [
+      {
+        id: `project-${Date.now()}-greg`,
+        name: "Greg's House",
+        description: "Living room redesign with modern furniture and lighting",
+        images: [], // Empty initially - users will add their own images
+        createdAt: Date.now() - 86400000, // 1 day ago
+        sharedWith: ["John Doe", "Jane Smith", "Bob Johnson"],
+        shareMessage:
+          "Hey everyone! I'd love your feedback on my living room redesign. What do you think about the furniture choices and layout?",
+      },
+      {
+        id: `project-${Date.now()}-sera`,
+        name: "Sera's Room",
+        description: "Bedroom makeover with minimalist aesthetic",
+        images: [], // Empty initially - users will add their own images
+        createdAt: Date.now() - 172800000, // 2 days ago
+        sharedWith: ["Alice Williams", "Michael Jordan"],
+        shareMessage:
+          "Looking for feedback on my bedroom redesign! Especially interested in thoughts about the color scheme and furniture placement.",
+      },
+    ];
+
+    await AsyncStorage.setItem(
+      SAVED_PROJECTS_KEY,
+      JSON.stringify(demoProjects)
+    );
+    await AsyncStorage.setItem(DEMO_INIT_FLAG, "true");
+  } catch (error) {
+    console.error("Error initializing demo projects:", error);
+  }
+};
+
 export { SAVED_IMAGES_KEY, SAVED_PROJECTS_KEY };
