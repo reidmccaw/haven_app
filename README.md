@@ -62,14 +62,6 @@ The app will not load if launched with Expo Go.
 
 ## Building for Production
 
-### iOS Build
-
-#### Using EAS Build (Recommended)
-
-```bash
-npm run build:ios
-```
-
 #### Local Build with Xcode
 
 1. Generate native iOS project (if not already generated):
