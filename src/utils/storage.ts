@@ -11,6 +11,16 @@ import {
 const SAVED_IMAGES_KEY = "@haven_saved_images";
 const SAVED_PROJECTS_KEY = "@haven_saved_projects";
 
+interface SavedProject {
+  id: string;
+  name: string;
+  description: string;
+  images: string[];
+  createdAt: number;
+  sharedWith?: string[];
+  shareMessage?: string;
+}
+
 // Get the document directory path (persists across app restarts)
 // Use a cached value to avoid repeated File object creation
 let cachedDocumentDir: string | null = null;
@@ -507,10 +517,22 @@ export const copyBundledAssetToDocuments = async (
       return null;
     }
 
-    // Copy from asset URI to document directory
-    const sourceFile = new ExpoFile(asset.localUri);
+    // Create destination file object
     const destFile = new ExpoFile(Paths.document, filename);
 
+    // Check if file already exists - if so, delete it first
+    try {
+      const destInfo = await destFile.info();
+      if (destInfo.exists) {
+        // File already exists, delete it so we can overwrite
+        await destFile.delete();
+      }
+    } catch (e) {
+      // File doesn't exist or error checking, continue with copy
+    }
+
+    // Copy from asset URI to document directory
+    const sourceFile = new ExpoFile(asset.localUri);
     await sourceFile.copy(destFile);
 
     // Verify the file was created
@@ -527,35 +549,17 @@ export const copyBundledAssetToDocuments = async (
   }
 };
 
-// Initialize demo projects on first app load
+// Initialize demo projects - always ensures demo projects use bundled assets
 export const initializeDemoProjects = async (): Promise<void> => {
   try {
-    const DEMO_INIT_FLAG = "@haven_demo_projects_initialized";
-    const hasInitialized = await AsyncStorage.getItem(DEMO_INIT_FLAG);
-
-    if (hasInitialized) {
-      return; // Already initialized
-    }
-
-    // Check if any projects exist
-    const existing = await AsyncStorage.getItem(SAVED_PROJECTS_KEY);
-    if (existing) {
-      const projects = JSON.parse(existing);
-      if (projects.length > 0) {
-        // Projects exist, don't initialize
-        await AsyncStorage.setItem(DEMO_INIT_FLAG, "true");
-        return;
-      }
-    }
-
     // Copy demo images from bundled assets to document directory
     const gregsHouseFilenames = getGregsHouseImageFilenames();
     const serasRoomFilenames = getSerasRoomImageFilenames();
-    
+
     const gregsHouseImages: string[] = [];
     const serasRoomImages: string[] = [];
 
-    // Copy Greg's House demo images
+    // Always copy Greg's House demo images from bundled assets
     if (gregsHouseDemoImages.length > 0) {
       for (let i = 0; i < gregsHouseDemoImages.length; i++) {
         const filename = gregsHouseFilenames[i];
@@ -569,7 +573,7 @@ export const initializeDemoProjects = async (): Promise<void> => {
       }
     }
 
-    // Copy Sera's Room demo images
+    // Always copy Sera's Room demo images from bundled assets
     if (serasRoomDemoImages.length > 0) {
       for (let i = 0; i < serasRoomDemoImages.length; i++) {
         const filename = serasRoomFilenames[i];
@@ -583,35 +587,79 @@ export const initializeDemoProjects = async (): Promise<void> => {
       }
     }
 
-    // Create demo projects with demo images
-    const demoProjects = [
-      {
+    // Load existing projects
+    const existing = await AsyncStorage.getItem(SAVED_PROJECTS_KEY);
+    let existingProjects: SavedProject[] = existing ? JSON.parse(existing) : [];
+
+    // Find or create demo projects
+    const gregProjectIndex = existingProjects.findIndex(
+      (p) =>
+        p.name?.toLowerCase().includes("greg") &&
+        p.name?.toLowerCase().includes("house")
+    );
+    const seraProjectIndex = existingProjects.findIndex(
+      (p) =>
+        p.name?.toLowerCase().includes("sera") &&
+        p.name?.toLowerCase().includes("room")
+    );
+
+    // Update or create Greg's House project with bundled images
+    if (gregProjectIndex >= 0) {
+      // Update existing project to use bundled images (preserve id and createdAt)
+      existingProjects[gregProjectIndex] = {
+        ...existingProjects[gregProjectIndex],
+        images: gregsHouseImages, // Always use bundled images
+        name: "Greg's House", // Ensure correct name
+        description: "Living room redesign with modern furniture and lighting",
+        sharedWith: ["John Doe", "Jane Smith", "Bob Johnson"],
+        shareMessage:
+          "Hey everyone! I'd love your feedback on my living room redesign. What do you think about the furniture choices and layout?",
+      };
+    } else {
+      // Create new Greg's House project
+      existingProjects.push({
         id: `project-${Date.now()}-greg`,
         name: "Greg's House",
         description: "Living room redesign with modern furniture and lighting",
-        images: gregsHouseImages, // Demo images copied from assets
+        images: gregsHouseImages,
         createdAt: Date.now() - 86400000, // 1 day ago
         sharedWith: ["John Doe", "Jane Smith", "Bob Johnson"],
         shareMessage:
           "Hey everyone! I'd love your feedback on my living room redesign. What do you think about the furniture choices and layout?",
-      },
-      {
+      });
+    }
+
+    // Update or create Sera's Room project with bundled images
+    if (seraProjectIndex >= 0) {
+      // Update existing project to use bundled images (preserve id and createdAt)
+      existingProjects[seraProjectIndex] = {
+        ...existingProjects[seraProjectIndex],
+        images: serasRoomImages, // Always use bundled images
+        name: "Sera's Room", // Ensure correct name
+        description: "Bedroom makeover with minimalist aesthetic",
+        sharedWith: ["Alice Williams", "Michael Jordan"],
+        shareMessage:
+          "Looking for feedback on my bedroom redesign! Especially interested in thoughts about the color scheme and furniture placement.",
+      };
+    } else {
+      // Create new Sera's Room project
+      existingProjects.push({
         id: `project-${Date.now()}-sera`,
         name: "Sera's Room",
         description: "Bedroom makeover with minimalist aesthetic",
-        images: serasRoomImages, // Demo images copied from assets
+        images: serasRoomImages,
         createdAt: Date.now() - 172800000, // 2 days ago
         sharedWith: ["Alice Williams", "Michael Jordan"],
         shareMessage:
           "Looking for feedback on my bedroom redesign! Especially interested in thoughts about the color scheme and furniture placement.",
-      },
-    ];
+      });
+    }
 
+    // Save updated projects
     await AsyncStorage.setItem(
       SAVED_PROJECTS_KEY,
-      JSON.stringify(demoProjects)
+      JSON.stringify(existingProjects)
     );
-    await AsyncStorage.setItem(DEMO_INIT_FLAG, "true");
   } catch (error) {
     console.error("Error initializing demo projects:", error);
   }
