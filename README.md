@@ -1,10 +1,10 @@
 # Haven App
 
-A React Native mobile app built with Expo for AR furniture placement and interior design visualization. Users can scan their space, place 3D furniture models, take photos, and collaborate through comments on design projects.
+A React Native mobile app built with Expo for AR furniture placement and interior design visualization. Users can scan their space, place furniture models, take photos, and collaborate through comments on design projects.
 
 ## Features
 
-- **AR Furniture Placement**: Place 3D furniture models in your space using AR
+- **AR Furniture Placement**: Place furniture models in your space using AR
 - **Project Management**: Create and manage design projects with multiple scenes
 - **Photo Capture**: Save snapshots of your AR designs to projects
 - **Comment System**: Add comments and feedback on specific images and locations
@@ -14,17 +14,13 @@ A React Native mobile app built with Expo for AR furniture placement and interio
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (v18 or later) - [Download](https://nodejs.org/)
-- **npm** or **yarn** - Comes with Node.js
-- **Expo CLI** - Will be installed globally or via npx
+- **Node.js**
+- **npm**
+- **Expo CLI**
 - **iOS Development** (for iOS builds):
-  - macOS (required)
-  - Xcode (latest version from App Store)
-  - CocoaPods: `sudo gem install cocoapods`
-- **Android Development** (for Android builds):
-  - Android Studio
-  - Android SDK
-  - Java Development Kit (JDK)
+  - macOS
+  - Xcode
+  - CocoaPods
 
 ## Installation
 
@@ -58,49 +54,11 @@ Before you begin, ensure you have the following installed:
 npm start
 ```
 
-This will start the Metro bundler and display a QR code in your terminal.
+### Using Expo Go Does Not Work For AR Features
 
-#### Run on iOS Simulator/Device
+**Important**: This app uses custom native modules (ViroReact for AR) that are **not compatible with Expo Go**. You must build a native app to use AR features.
 
-```bash
-npm run ios
-```
-
-**Note**: This requires:
-
-- macOS
-- Xcode installed
-- iOS Simulator (or a connected iPhone with developer mode enabled)
-
-#### Run on Android Emulator/Device
-
-```bash
-npm run android
-```
-
-**Note**: This requires:
-
-- Android Studio installed
-- Android emulator running (or a connected Android device with USB debugging enabled)
-
-#### Run on Web
-
-```bash
-npm run web
-```
-
-**Note**: AR features will not work on web. The app will open in your default browser.
-
-### Using Expo Go (Limited Functionality)
-
-⚠️ **Important**: This app uses custom native modules (ViroReact for AR) that are **not compatible with Expo Go**. You must build a native app to use AR features.
-
-If you want to test non-AR features only, you can use Expo Go, but most functionality will not work:
-
-```bash
-npm start
-# Then scan the QR code with Expo Go app
-```
+The app will not load if launched with Expo Go.
 
 ## Building for Production
 
@@ -126,51 +84,15 @@ npm run build:ios
    open ios/Haven.xcworkspace
    ```
 
-3. In Xcode:
+3. For physical device (iPhone):
+
+   - Connect your iPhone to your Mac via USB cable
+   - Trust the computer on your iPhone (if prompted)
+   - In Xcode, select your connected device from the device dropdown
    - Select your development team
-   - Choose a target device or simulator
-   - Click "Run" (▶️) or press `Cmd + R`
+   - Click "Run" or press `Cmd + R`
 
-### Android Build
-
-#### Using EAS Build (Recommended)
-
-```bash
-npm run build:android
-```
-
-#### Local Build with Android Studio
-
-1. Generate native Android project (if not already generated):
-
-   ```bash
-   npx expo prebuild --platform android
-   ```
-
-2. Open in Android Studio:
-
-   ```bash
-   open -a "Android Studio" android
-   ```
-
-3. Build and run from Android Studio
-
-## Project Structure
-
-```
-haven_app/
-├── assets/           # Images, logos, and demo assets
-│   ├── demo/        # Demo images for Greg's House and Sera's Room
-│   └── models/      # 3D furniture model thumbnails
-├── src/
-│   ├── components/  # React components
-│   ├── utils/       # Utility functions and helpers
-│   └── theme.ts     # App theme configuration
-├── App.tsx          # Root component
-├── app.json         # Expo configuration
-├── package.json     # Dependencies and scripts
-└── tsconfig.json    # TypeScript configuration
-```
+**Note**: AR features require a physical device - the simulator does not have a camera.
 
 ## Key Technologies
 
@@ -187,60 +109,6 @@ haven_app/
 The app automatically initializes two demo projects on first launch:
 
 - **Greg's House** - Living room redesign with 4 demo images
-- **Sera's Room** - Bedroom makeover with 2 demo images
+- **Sera's Room** - Bedroom design with 2 demo images
 
-These projects include pre-loaded comments and are perfect for testing the comment and collaboration features.
-
-## Troubleshooting
-
-### iOS Build Issues
-
-If you encounter build errors:
-
-1. Clean the build folder in Xcode: `Product > Clean Build Folder` (Shift + Cmd + K)
-2. Reinstall pods:
-   ```bash
-   cd ios
-   rm -rf Pods Podfile.lock
-   pod install
-   cd ..
-   ```
-
-### Android Build Issues
-
-1. Clean gradle cache:
-   ```bash
-   cd android
-   ./gradlew clean
-   cd ..
-   ```
-
-### Metro Bundler Issues
-
-Clear cache and restart:
-
-```bash
-npm start -- --reset-cache
-```
-
-### AR Features Not Working
-
-- Ensure you're running a native build (not Expo Go)
-- Check camera permissions are granted
-- Verify you're on a physical device (AR requires real camera, not simulator)
-- Make sure `@reactvision/react-viro` is properly configured in `app.json`
-
-## Development Notes
-
-- **Native Modules**: This app requires native builds - Expo Go will not work for AR features
-- **Demo Assets**: Demo images are bundled with the app and automatically copied on first launch
-- **Storage**: All data (projects, images, comments) is stored locally using AsyncStorage
-- **Comments**: Demo projects have mock comments that merge with user-generated comments
-
-## License
-
-This project is private and proprietary.
-
-## Support
-
-For issues or questions, please open an issue on GitHub or contact the maintainers.
+These projects include pre-loaded comments for testing the comment and collaboration features.
