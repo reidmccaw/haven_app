@@ -1,5 +1,12 @@
 import { Paths, File as ExpoFile } from "expo-file-system";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Asset } from "expo-asset";
+import {
+  gregsHouseDemoImages,
+  serasRoomDemoImages,
+  getGregsHouseImageFilenames,
+  getSerasRoomImageFilenames,
+} from "./demoAssets";
 
 const SAVED_IMAGES_KEY = "@haven_saved_images";
 const SAVED_PROJECTS_KEY = "@haven_saved_projects";
@@ -484,6 +491,42 @@ export const migrateProjectImages = async (): Promise<void> => {
   }
 };
 
+// Copy a bundled asset to the document directory
+// Returns the filename if successful, null otherwise
+export const copyBundledAssetToDocuments = async (
+  assetModule: any,
+  filename: string
+): Promise<string | null> => {
+  try {
+    // Load the asset to get its local URI
+    const asset = Asset.fromModule(assetModule);
+    await asset.downloadAsync();
+
+    if (!asset.localUri) {
+      console.error(`Failed to load asset for ${filename}`);
+      return null;
+    }
+
+    // Copy from asset URI to document directory
+    const sourceFile = new ExpoFile(asset.localUri);
+    const destFile = new ExpoFile(Paths.document, filename);
+
+    await sourceFile.copy(destFile);
+
+    // Verify the file was created
+    const fileInfo = await Paths.info(destFile.uri);
+    if (fileInfo.exists) {
+      return filename; // Return just the filename for storage
+    } else {
+      console.error(`File was not created at: ${destFile.uri}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error copying bundled asset ${filename}:`, error);
+    return null;
+  }
+};
+
 // Initialize demo projects on first app load
 export const initializeDemoProjects = async (): Promise<void> => {
   try {
@@ -505,13 +548,48 @@ export const initializeDemoProjects = async (): Promise<void> => {
       }
     }
 
-    // Create demo projects
+    // Copy demo images from bundled assets to document directory
+    const gregsHouseFilenames = getGregsHouseImageFilenames();
+    const serasRoomFilenames = getSerasRoomImageFilenames();
+    
+    const gregsHouseImages: string[] = [];
+    const serasRoomImages: string[] = [];
+
+    // Copy Greg's House demo images
+    if (gregsHouseDemoImages.length > 0) {
+      for (let i = 0; i < gregsHouseDemoImages.length; i++) {
+        const filename = gregsHouseFilenames[i];
+        const copiedFilename = await copyBundledAssetToDocuments(
+          gregsHouseDemoImages[i],
+          filename
+        );
+        if (copiedFilename) {
+          gregsHouseImages.push(copiedFilename);
+        }
+      }
+    }
+
+    // Copy Sera's Room demo images
+    if (serasRoomDemoImages.length > 0) {
+      for (let i = 0; i < serasRoomDemoImages.length; i++) {
+        const filename = serasRoomFilenames[i];
+        const copiedFilename = await copyBundledAssetToDocuments(
+          serasRoomDemoImages[i],
+          filename
+        );
+        if (copiedFilename) {
+          serasRoomImages.push(copiedFilename);
+        }
+      }
+    }
+
+    // Create demo projects with demo images
     const demoProjects = [
       {
         id: `project-${Date.now()}-greg`,
         name: "Greg's House",
         description: "Living room redesign with modern furniture and lighting",
-        images: [], // Empty initially - users will add their own images
+        images: gregsHouseImages, // Demo images copied from assets
         createdAt: Date.now() - 86400000, // 1 day ago
         sharedWith: ["John Doe", "Jane Smith", "Bob Johnson"],
         shareMessage:
@@ -521,7 +599,7 @@ export const initializeDemoProjects = async (): Promise<void> => {
         id: `project-${Date.now()}-sera`,
         name: "Sera's Room",
         description: "Bedroom makeover with minimalist aesthetic",
-        images: [], // Empty initially - users will add their own images
+        images: serasRoomImages, // Demo images copied from assets
         createdAt: Date.now() - 172800000, // 2 days ago
         sharedWith: ["Alice Williams", "Michael Jordan"],
         shareMessage:
